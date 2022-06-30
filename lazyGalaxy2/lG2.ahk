@@ -25,6 +25,7 @@ Loop, {
 		return
 	} else if (!WinActive("ahk_exe LazyGalaxy2.exe")) {
 		ToolTip
+		started := False
 		MsgBox, You removed the mouse from the game window, script stoped!
 		return
 	}
