@@ -5,42 +5,104 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 #MaxThreadsPerHotkey 4
 
 started := False
-imgsList := ["bigRock0","bigRock1","bigRock2","smallRock0","smallRock1","smallRock2","redRock0","redRock1","redRock2","upgradeRock0","upgradeRock1","upgradeRock2","ironRock0","ironRock1","ironRock2","greenRock0","greenRock1","greenRock2","green2Rock0","green2Rock0","green2Rock0","red2Rock0","red2Rock1","red2Rock2"]
-return
+scrWorkType := ""
 
-#IfWinActive ahk_exe LazyGalaxy2.exe
-F1::
-#MaxThreadsPerHotkey 4
-if (started) {
-	started := False
-	return
+defAsteroids := ["bigRock0.png","bigRock1.png","bigRock2.png","smallRock0.png","smallRock1.png","smallRock2.png"]
+imgsList := [] ;array with all imgs from folder
+imgsListWithNoDefRocks := [] ;array with only special asteroids
+Loop, %A_ScriptDir%\imgs\*.png, , 0
+{
+    imgsList.Push(A_LoopFileName)
+	if A_LoopFileName not contains bigRock,smallRock
+		imgsListWithNoDefRocks.Push(A_LoopFileName)
 }
-started := True
-ToolTip, Script runned!, 100, 100, 1
-Loop, {
+
+searchImg(arr) {
+	Loop % arr.MaxIndex()
+	{
+		img := arr[A_index]
+		ImageSearch,imgFMPosX,imgFMPosY,140,242,1800,440, %A_ScriptDir%\imgs\%img%
+		if (ErrorLevel = 0) {
+			MouseMove, %imgFMPosX%, %imgFMPosY%, 0
+			Loop, 5 {
+				Click
+				sleep, 20
+			}
+		}
+	}
+}
+
+checkActive(started) {	
 	if (!started) {
 		ToolTip, Script disabled!, 100, 100, 1
 		sleep, 4000
 		ToolTip
-		return
+		return "stop1"
 	} else if (!WinActive("ahk_exe LazyGalaxy2.exe")) {
 		ToolTip
 		started := False
 		MsgBox, You removed the mouse from the game window, script stoped!
-		return
+		return "stop2"
+	} else {
+		return "run"
 	}
-	Loop % imgsList.MaxIndex()
-	{
-		img := imgsList[A_index]
-		ImageSearch,imgFMPosX,imgFMPosY,140,242,1800,440, %A_ScriptDir%\imgs\%img%.png ;
-		if (ErrorLevel = 0) {
-			MouseMove, %imgFMPosX%, %imgFMPosY%, 0
-			sleep, 20
-			Click
-			Click
-			Click
-			Click
+}
+
+return
+
+#IfWinActive ahk_exe LazyGalaxy2.exe
+
+F1:: ;search all asteroids
+#MaxThreadsPerHotkey 4
+if (started && scrWorkType == "F1") {
+	started := False
+	scrWorkType := ""
+	return
+} else if (scrWorkType != "F1" && scrWorkType != "") {
+	MsgBox, You tryed to start 2 scripts in one time, stop another before start new.
+	return
+}
+started := True
+scrWorkType := "F1"
+ToolTip, Script F1 runned!, 100, 100, 1
+Loop, {
+	if (checkActive(started) == "run") {
+		if (Mod(A_index,20) == 0) {
+			searchImg(imgsListWithNoDefRocks)
+		} else {
+			searchImg(defAsteroids)
 		}
+	} else {
+		Break
+	}
+}
+return
+
+F2:: ;search only special asteroids
+#MaxThreadsPerHotkey 4
+if (started && scrWorkType == "F2") {
+	started := False
+	scrWorkType := ""
+	return
+} else if (scrWorkType != "F2" && scrWorkType != "") {
+	MsgBox, You tryed to start 2 scripts in one time, stop another before start new.
+	return
+}
+started := True
+scrWorkType := "F2"
+ToolTip, Script F2 runned!, 100, 100, 1
+Loop, {
+	if (checkActive(started) == "run") {
+		if (Mod(A_index,20) == 0) {
+			searchImg(imgsListWithNoDefRocks)
+		} else {
+			Loop, 20 {
+				send, w
+				sleep, 10
+			}
+		}
+	} else {
+		Break
 	}
 }
 return
@@ -48,3 +110,7 @@ return
 #IfWinNotActive
 F1::
 MsgBox, You tried start script, not in the game!
+return
+F2::
+MsgBox, You tried start script, not in the game!
+return
